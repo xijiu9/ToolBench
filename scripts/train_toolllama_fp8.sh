@@ -1,7 +1,23 @@
 export PYTHONPATH=./
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export MODEL_PATH="meta-llama/Llama-2-7b-hf"
-export CONVERTED_MODEL_PATH="/ssd/data/xihaocheng/ToolBench/converted_models/llama-2-7b"
+export CONVERTED_MODEL_PATH="converted_models/llama-2-7b"
+
+COAT_PATH=$(pip show coat | grep "Editable project location" | awk -F': ' '{print $2}')
+echo "COAT package is located at: $COAT_PATH"
+
+python $COAT_PATH/coat/activation/models/coat_llama_convert_from_hf.py \
+    --model_name $MODEL_NAME \
+    --save_path $CONVERTED_MODEL_PATH \
+    --quantize_model true \
+    --fabit E4M3 \
+    --fwbit E4M3 \
+    --fobit E4M3 \
+    --bwbit E5M2 \
+    --babit E5M2 \
+    --bobit E5M2 \
+    --group_size 16
+
 
 torchrun --nproc_per_node=8 --master_port=20001 toolbench/train/train_fp8.py \
     --model_name_or_path $MODEL_PATH  \
